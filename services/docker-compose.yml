@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+
+  mongo:
+    image: mongo
+    container_name: clase-GraphQL-Mongo_Libreria
+    volumes:
+     - ../app/backend/mongo:/data/db
+    ports:
+     - 27030:27017
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${username}
+      MONGO_INITDB_ROOT_PASSWORD: ${passwd}
+
+  mongo-express:
+    image: mongo-express
+    container_name: clase-GraphQL-MongoExpress_Libreria
+    restart: always
+    ports:
+     - 8085:8081
+    depends_on:
+     - mongo
+    volumes:
+     - ../app/backend/mongo:/data/db
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://${username}:${passwd}@clase-GraphQL-Mongo_Libreria:27017"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${username}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${passwd}
+      ME_CONFIG_BASICAUTH_USERNAME: ${username}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${passwd}
+      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
+    links:
+     - mongo
