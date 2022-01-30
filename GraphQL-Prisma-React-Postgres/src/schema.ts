@@ -1,0 +1,13 @@
+//////////////////////////
+// IMPORTACION DE PAQUETES
+//////////////////////////
+import { gql } from "apollo-server"
+
+//////////////////////////
+// DEFINICION DE LOS SCHEMAS
+//////////////////////////
+export const typeDefs = gql`
+type Query {
+    hello: String!
+}
+`
