@@ -7,13 +7,19 @@ import { PrismaClient, Prisma } from "@prisma/client"
 // IMPORTACION DE CONSTANTES
 //////////////////////////
 import { typeDefs } from "./schema"
-import { Query, Mutation } from "./resolvers/index"
+import { Query, Mutation, Profile, Post, User } from "./resolvers/index"
+import { getUserFromToken } from './utils/getUserFromToken';
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 
-// Creacion de interfaz para no perder las ventajas de TypeScript sobre el objeto prisma en el context
+//////////////////////////
+// DEFINICION DE LAS INTERFACES
+//////////////////////////
 export interface Context {
     prisma: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined>
+    userInfo: {
+        userId: number
+    } | null
 }
 
 const server = new ApolloServer({
@@ -21,12 +27,23 @@ const server = new ApolloServer({
     resolvers: {
         Query,
         Mutation,
+        Profile,
+        Post,
+        User
     },
-    context: {
-        prisma,
+    context: async ({ req }: any): Promise<Context> => {
+        const userInfo = await getUserFromToken(req.headers.authorization)
+        return {
+            prisma,
+            userInfo
+        }
     }
 })
 
+
+//////////////////////////
+// LANZAMIENTO DEL SERVER
+//////////////////////////
 server.listen().then(({ url }) => {
     console.log(`🚀  Server ready at ${url}`);
 });  

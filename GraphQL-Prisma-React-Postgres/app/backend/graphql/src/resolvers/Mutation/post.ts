@@ -1,3 +1,4 @@
+import { canUserMutatePost } from './../../utils/canUserMutatePost';
 import { Post, Prisma } from "@prisma/client";
 import { Context } from "../../index"
 
@@ -20,8 +21,18 @@ export const postResolvers = {
     postCreate: async (
         _: any, 
         { post }: PostArgs, 
-        { prisma }: Context
+        { prisma, userInfo }: Context
         ): Promise<PostPayloadType> => {
+
+            // Comprobar si el usuario esta logueado
+            if(!userInfo) {
+                return {
+                    userErrors: [{
+                        message: "Acceso denegado"
+                    }],
+                    post: null
+                }
+            }
 
             const { title, content } = post
             
@@ -40,7 +51,7 @@ export const postResolvers = {
                     data: {
                         title,
                         content,
-                        authorId: 1
+                        authorId: userInfo.userId
                     }
                 })
             }
@@ -49,8 +60,31 @@ export const postResolvers = {
     postUpdate: async (
         _: any,
         { postId, post }: { postId: string, post: PostArgs["post"] },
-        { prisma }: Context
+        { prisma, userInfo }: Context
     ) => {
+        
+        // Comprobar si el usuario esta logueado
+        if(!userInfo) {
+            return {
+                userErrors: [{
+                    message: "Acceso denegado"
+                }],
+                post: null
+            }
+        }
+
+        // Comprobar si el usuario tiene permisos sobre el post
+        const error = await canUserMutatePost({
+            userId: userInfo.userId,
+            postId: Number(postId),
+            prisma
+        })
+
+        // Si existe un error lo devolvemos
+        if(error) return error
+
+        // Comprobar si el usuario esta autorizado
+
         const { title, content } = post
 
         if(!title && !content) {
@@ -109,8 +143,28 @@ export const postResolvers = {
     postDelete: async (
         _: any,
         { postId }: { postId: string },
-        { prisma }: Context
+        { prisma, userInfo }: Context
     ): Promise<PostPayloadType> => {
+
+        // Comprobar si el usuario esta logueado
+        if(!userInfo) {
+            return {
+                userErrors: [{
+                    message: "Acceso denegado"
+                }],
+                post: null
+            }
+        }
+
+        // Comprobar si el usuario tiene permisos sobre el post
+        const error = await canUserMutatePost({
+            userId: userInfo.userId,
+            postId: Number(postId),
+            prisma
+        })
+
+        // Si existe un error lo devolvemos
+        if(error) return error
 
         // Comprobar que existe el post
         const post = await prisma.post.findUnique({
@@ -143,4 +197,85 @@ export const postResolvers = {
         }
 
     },
+
+    postPublish: async (
+        _: any,
+        { postId }: { postId: string },
+        { prisma, userInfo }: Context
+    ): Promise<PostPayloadType> => {
+
+        // Comprobar si el usuario esta logueado
+        if(!userInfo) {
+            return {
+                userErrors: [{
+                    message: "Acceso denegado"
+                }],
+                post: null
+            }
+        }
+
+        // Comprobar si el usuario tiene permisos sobre el post
+        const error = await canUserMutatePost({
+            userId: userInfo.userId,
+            postId: Number(postId),
+            prisma
+        })
+
+        // Si existe un error lo devolvemos
+        if(error) return error
+
+        return {
+            userErrors: [],
+            post: prisma.post.update({
+                where: {
+                    id: Number(postId)
+                },
+                data: {
+                    published: true
+                }
+            })
+        }
+
+    },
+
+    postUnpublish: async (
+        _: any,
+        { postId }: { postId: string },
+        { prisma, userInfo }: Context
+    ): Promise<PostPayloadType> => {
+
+        // Comprobar si el usuario esta logueado
+        if(!userInfo) {
+            return {
+                userErrors: [{
+                    message: "Acceso denegado"
+                }],
+                post: null
+            }
+        }
+
+        // Comprobar si el usuario tiene permisos sobre el post
+        const error = await canUserMutatePost({
+            userId: userInfo.userId,
+            postId: Number(postId),
+            prisma
+        })
+
+        // Si existe un error lo devolvemos
+        if(error) return error
+
+        return {
+            userErrors: [],
+            post: prisma.post.update({
+                where: {
+                    id: Number(postId)
+                },
+                data: {
+                    published: false
+                }
+            })
+        }
+
+    }
+
 }
