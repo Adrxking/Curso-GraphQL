@@ -3,6 +3,7 @@
 //////////////////////////
 
 exports.Query = {
+    hello: () => { return "World" },
     // Obtener todos los productos
     products: (parent, {filter}, {products, reviews}) => {
       let filteredProducts = products
